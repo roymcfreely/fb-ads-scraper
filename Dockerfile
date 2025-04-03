@@ -1,6 +1,5 @@
 FROM node:18-slim
 
-# Install Chromium dependencies (including libdrm2!)
 RUN apt-get update && apt-get install -y \
     wget \
     ca-certificates \
@@ -19,12 +18,12 @@ RUN apt-get update && apt-get install -y \
     libxdamage1 \
     libxrandr2 \
     libdrm2 \
+    libgbm1 \
     xdg-utils \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
 COPY package*.json ./
 RUN npm install
 COPY . .
@@ -33,6 +32,7 @@ ENV PORT=3000
 EXPOSE 3000
 
 CMD ["npm", "start"]
+
 
 
 
