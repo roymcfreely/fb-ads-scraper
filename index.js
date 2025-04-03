@@ -39,8 +39,16 @@ app.post("/scrape", async (req, res) => {
     await new Promise(resolve => setTimeout(resolve, 10000));
 
     // Grab full HTML of page and log it to console
-    const html = await page.content();
-    console.log("🧠 FULL PAGE HTML:\n", html.substring(0, 5000), "\n... (truncated)");
+    const inputs = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('input')).map(input => ({
+    ariaLabel: input.getAttribute('aria-label'),
+    type: input.getAttribute('type'),
+    placeholder: input.getAttribute('placeholder'),
+    outerHTML: input.outerHTML.substring(0, 200)
+  }));
+});
+console.log("🧠 Visible input elements:", inputs);
+    
 
     await browser.close();
 
