@@ -40,10 +40,10 @@ app.post("/scrape", async (req, res) => {
     const countryDropdowns = await page.$$('div[role="button"]');
     if (countryDropdowns.length > 0) {
       await countryDropdowns[0].click();
-      await page.waitForTimeout(1000);
+      await new Promise(resolve => setTimeout(resolve, 1000));
       await page.keyboard.type("United States");
       await page.keyboard.press("Enter");
-      await page.waitForTimeout(2000);
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
     // Wait for search input
@@ -52,7 +52,7 @@ app.post("/scrape", async (req, res) => {
     // Type and search
     await page.type('input[aria-label="Search by advertiser name or keyword"]', businessName);
     await page.keyboard.press("Enter");
-    await page.waitForTimeout(6000);
+    await new Promise(resolve => setTimeout(resolve, 6000));
 
     // Wait for ad cards or fallback
     await page.waitForSelector('[data-testid="ad"], ._9f9a', {
