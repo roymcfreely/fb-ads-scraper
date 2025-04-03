@@ -35,49 +35,18 @@ app.post("/scrape", async (req, res) => {
       timeout: 60000
     });
 
-    // Wait for and click on the country dropdown
-    await page.waitForSelector('div[role="button"]', { timeout: 10000 });
-    const countryDropdowns = await page.$$('div[role="button"]');
-    if (countryDropdowns.length > 0) {
-      await countryDropdowns[0].click();
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await page.keyboard.type("United States");
-      await page.keyboard.press("Enter");
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    }
+    // Wait extra long to give the DOM time to fully render
+    await new Promise(resolve => setTimeout(resolve, 10000));
 
-    // Wait for more flexible search input selector
-    await page.waitForSelector('input[type="search"], input[aria-label]', { timeout: 15000 });
-
-    // Optional: take a screenshot for debugging
-    // await page.screenshot({ path: "search-step.png", fullPage: true });
-
-    // Type and search
-    await page.type('input[type="search"], input[aria-label]', businessName);
-    await page.keyboard.press("Enter");
-    await new Promise(resolve => setTimeout(resolve, 6000));
-
-    // Wait for ad cards or fallback
-    await page.waitForSelector('[data-testid="ad"], ._9f9a', {
-      timeout: 10000
-    });
-
-    const ads = await page.evaluate(() => {
-      const adElements = document.querySelectorAll('[data-testid="ad"]');
-      return Array.from(adElements).slice(0, 3).map(ad => {
-        const text = ad.innerText.trim();
-        const link = ad.querySelector('a[href*="facebook.com/ads/library"]')?.href || null;
-        const image = ad.querySelector("img")?.src || null;
-        return { text, link, image };
-      });
-    });
+    // Grab full HTML of page and log it to console
+    const html = await page.content();
+    console.log("🧠 FULL PAGE HTML:\n", html.substring(0, 5000), "\n... (truncated)");
 
     await browser.close();
 
     res.json({
-      businessName,
-      found: ads.length > 0,
-      ads
+      status: "success",
+      message: "HTML dumped to logs — check Railway logs to find the right selector."
     });
   } catch (err) {
     console.error("💥 Puppeteer error:", err);
