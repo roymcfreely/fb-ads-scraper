@@ -4,12 +4,10 @@ const puppeteer = require("puppeteer");
 const app = express();
 app.use(express.json());
 
-// Health check
 app.get("/", (req, res) => {
   res.send("✅ Puppeteer server is live!");
 });
 
-// Scrape route
 app.post("/scrape", async (req, res) => {
   const { businessName } = req.body;
 
@@ -25,7 +23,6 @@ app.post("/scrape", async (req, res) => {
 
     const page = await browser.newPage();
 
-    // Fake headers
     await page.setUserAgent(
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
     );
@@ -33,24 +30,35 @@ app.post("/scrape", async (req, res) => {
       "Accept-Language": "en-US,en;q=0.9"
     });
 
-    // Go to Facebook Ads Library
     await page.goto("https://www.facebook.com/ads/library/", {
       waitUntil: "domcontentloaded",
       timeout: 60000
     });
 
-    // Type in the business name and search
-    await page.type('input[placeholder="Search Ads Library"]', businessName);
+    // Wait for and click on the country dropdown
+    await page.waitForSelector('div[role="button"]', { timeout: 10000 });
+    const countryDropdowns = await page.$$('div[role="button"]');
+    if (countryDropdowns.length > 0) {
+      await countryDropdowns[0].click();
+      await page.waitForTimeout(1000);
+      await page.keyboard.type("United States");
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(2000);
+    }
+
+    // Wait for search input
+    await page.waitForSelector('input[aria-label="Search by advertiser name or keyword"]', { timeout: 10000 });
+
+    // Type and search
+    await page.type('input[aria-label="Search by advertiser name or keyword"]', businessName);
     await page.keyboard.press("Enter");
+    await page.waitForTimeout(6000);
 
-    await page.waitForTimeout(5000); // Let the results load a bit
-
-    // Wait for ad elements or "no ads" message
+    // Wait for ad cards or fallback
     await page.waitForSelector('[data-testid="ad"], ._9f9a', {
       timeout: 10000
     });
 
-    // Scrape ad data
     const ads = await page.evaluate(() => {
       const adElements = document.querySelectorAll('[data-testid="ad"]');
       return Array.from(adElements).slice(0, 3).map(ad => {
