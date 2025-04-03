@@ -25,7 +25,7 @@ app.post("/scrape", async (req, res) => {
 
     const page = await browser.newPage();
 
-    // 🧠 Spoof browser headers
+    // Fake headers
     await page.setUserAgent(
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
     );
@@ -33,16 +33,41 @@ app.post("/scrape", async (req, res) => {
       "Accept-Language": "en-US,en;q=0.9"
     });
 
-    // 🕒 Go to Facebook Ads Library with increased timeout
+    // Go to Facebook Ads Library
     await page.goto("https://www.facebook.com/ads/library/", {
       waitUntil: "domcontentloaded",
       timeout: 60000
     });
 
-    const title = await page.title();
+    // Type in the business name and search
+    await page.type('input[placeholder="Search Ads Library"]', businessName);
+    await page.keyboard.press("Enter");
+
+    await page.waitForTimeout(5000); // Let the results load a bit
+
+    // Wait for ad elements or "no ads" message
+    await page.waitForSelector('[data-testid="ad"], ._9f9a', {
+      timeout: 10000
+    });
+
+    // Scrape ad data
+    const ads = await page.evaluate(() => {
+      const adElements = document.querySelectorAll('[data-testid="ad"]');
+      return Array.from(adElements).slice(0, 3).map(ad => {
+        const text = ad.innerText.trim();
+        const link = ad.querySelector('a[href*="facebook.com/ads/library"]')?.href || null;
+        const image = ad.querySelector("img")?.src || null;
+        return { text, link, image };
+      });
+    });
+
     await browser.close();
 
-    res.json({ status: "success", title });
+    res.json({
+      businessName,
+      found: ads.length > 0,
+      ads
+    });
   } catch (err) {
     console.error("💥 Puppeteer error:", err);
     res.status(500).json({ error: "Puppeteer failed", details: err.toString() });
