@@ -4,6 +4,10 @@ const puppeteer = require('puppeteer');
 const app = express();
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.send("✅ Hello from Puppeteer app!");
+});
+
 app.post('/scrape', async (req, res) => {
   const { businessName } = req.body;
 
