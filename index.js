@@ -18,21 +18,20 @@ app.post("/scrape", async (req, res) => {
   try {
     const browser = await puppeteer.launch({
       headless: true,
-      executablePath: "/usr/bin/google-chrome",
+      executablePath: "/usr/bin/google-chrome", // use system Chrome
       args: ["--no-sandbox", "--disable-setuid-sandbox"]
-      });
+    });
 
     const page = await browser.newPage();
     await page.goto("https://www.facebook.com/ads/library/", { waitUntil: "networkidle2" });
 
-    // Just test basic functionality
-    const pageTitle = await page.title();
+    const title = await page.title();
     await browser.close();
 
-    res.json({ status: "success", title: pageTitle });
+    res.json({ status: "success", title });
   } catch (err) {
-    console.error("💥 Puppeteer error:", err.message);
-    res.status(500).json({ error: "Puppeteer failed", details: err.message });
+    console.error("💥 Puppeteer crash:", err); // <-- log full error object
+    res.status(500).json({ error: "Puppeteer failed", details: err.toString() });
   }
 });
 
