@@ -46,11 +46,14 @@ app.post("/scrape", async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
-    // Wait for search input
-    await page.waitForSelector('input[aria-label="Search by advertiser name or keyword"]', { timeout: 10000 });
+    // Wait for more flexible search input selector
+    await page.waitForSelector('input[type="search"], input[aria-label]', { timeout: 15000 });
+
+    // Optional: take a screenshot for debugging
+    // await page.screenshot({ path: "search-step.png", fullPage: true });
 
     // Type and search
-    await page.type('input[aria-label="Search by advertiser name or keyword"]', businessName);
+    await page.type('input[type="search"], input[aria-label]', businessName);
     await page.keyboard.press("Enter");
     await new Promise(resolve => setTimeout(resolve, 6000));
 
